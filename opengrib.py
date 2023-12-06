@@ -59,7 +59,6 @@ def CropH5(file_paths):
             # 检查文件路径是否包含 'f00'
             if 'f00' in file_path:
                 continue
-
             with h5py.File(file_path, 'r') as file:
                 fields_dataset = file['fields']
                 fields_data = fields_dataset[:]
