@@ -23,7 +23,6 @@ def normalized_data(result_file_path):
     normalized_data = (all_data_array - min_val) / (max_val - min_val)
 
     print(f'Shape of all_data_array: {all_data_array.shape}')
-    # print(f'Data: {all_data_array[:3]}')
     return normalized_data
 
 def Datalogger(normalized_data):
