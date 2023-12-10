@@ -49,16 +49,19 @@ def TransGrib2H5(folder_path):
 
     return output_file_paths
 
-def CropH5(file_paths):
-    result_file_path = 'result.h5'
-    with h5py.File(result_file_path, 'w') as result_file:
-        data_index = 0  # 记录数据的索引
-        for i, file_path in enumerate(file_paths):
-            # 检查文件路径是否包含 'f00'
-            if 'f00' in file_path:
-                continue
 
+
+def CropH5(file_paths):
+    result_file_path = 'moving.h5'
+    fixed_file_path = 'fixed.h5'
+
+    with h5py.File(result_file_path, 'w') as result_file, h5py.File(fixed_file_path, 'w') as fixed_file:
+        data_index_result = 0  # Record the index of data for result.h5
+        data_index_fixed = 0   # Record the index of data for fixed.h5
+
+        for i, file_path in enumerate(file_paths):
             with h5py.File(file_path, 'r') as file:
+                print(f'Processing {file_path}...')
                 fields_dataset = file['fields']
                 fields_data = fields_dataset[:]
 
@@ -67,18 +70,29 @@ def CropH5(file_paths):
             end_row = start_row + 1052
             end_col = start_col + 1788
 
-            # 将fields_data进行中心裁剪
+            # Crop the fields_data to the center
             fields_data = fields_data[start_row:end_row, start_col:end_col]
-            result_file.create_dataset(f'data_{data_index}', data=fields_data)
-            data_index += 1 
 
+            # Check if 'f00' is in the file name
+            if 'f00' not in file_path:
+                # Create dataset in result.h5 for files without 'f00' in their names
+                result_file.create_dataset(f'data_{data_index_result}', data=fields_data)
+                data_index_result += 1
+            else:
+                # Create dataset in fixed.h5 for files with 'f00' in their names
+                fixed_file.create_dataset(f'data_{data_index_fixed}', data=fields_data)
+                data_index_fixed += 1
+
+    # Load the data from result.h5 into a numpy array
     with h5py.File(result_file_path, 'r') as result_file:
-        result_data = np.array([result_file[f'data_{i}'][:] for i in range(data_index)])
+        result_data = np.array([result_file[f'data_{i}'][:] for i in range(data_index_result)])
 
+    # Load the data from fixed.h5 into a numpy array
+    with h5py.File(fixed_file_path, 'r') as fixed_file:
+        fixed_data = np.array([fixed_file[f'data_{i}'][:] for i in range(data_index_fixed)])
 
-    print(result_data.shape) 
-    print(result_data.dtype)  
-    print(result_data[:3])  
+    print(f'Shape of moving_data: {result_data.shape}')
+    print(f'Shape of fixed_data: {fixed_data.shape}')   
 
 if __name__ == '__main__':
     # Specify the folder containing the GRIB files
